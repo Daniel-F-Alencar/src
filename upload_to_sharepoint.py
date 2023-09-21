@@ -33,7 +33,6 @@ def organize_reports(dataframe, obj, obj_percent):
         timeout=10,
     )
 
-    print(auth_response.json())
     # Get access token
     access_token = auth_response.json()["access_token"]
 
@@ -69,12 +68,10 @@ def organize_reports(dataframe, obj, obj_percent):
             files = os.listdir(btg_folder)
 
             # Iterate over the files and move them to the client's folder if the client ID is in the filename
-            for filename in files:
-                bar += 0.17
-                obj.UpdateBar(bar + (len(files) * 0.5), len(files))
-                obj_percent.update(
-                    str(int(((bar + (len(files) * 0.5)) / len(files)) * 100)) + "%"
-                )
+            for i, filename in enumerate(files):
+                progress = 0.5 + ((i + 1) / len(files)) * 0.5
+                obj.UpdateBar(progress, 1)
+                obj_percent.update(f"{int(progress * 100)}%")
                 if str(row["conta"]) in filename:
                     # source_path = os.path.join(btg_folder, filename)
                     destination_path = os.path.join(client_dir, filename)
@@ -89,13 +86,12 @@ def organize_reports(dataframe, obj, obj_percent):
                         string_to_remove, ""
                     )
 
-                    print(destination_path)
                     # Read the file as binary data
                     with open(os.path.join(btg_folder, filename), "rb") as f:
                         file_data = f.read()
 
                     # Send the file to OneDrive
-                    upload_url = f"https://graph.microsoft.com/v1.0/users/4d4bf836-7e9e-455f-be46-5cb9c5cc729f/drive/root:{destination_path_fixed}:/content"
+                    upload_url = f"https://graph.microsoft.com/v1.0/users/c59fe225-1e84-45ee-9e5a-575f0c4767d1/drive/root:{destination_path_fixed}:/content"
                     headers = {
                         "Authorization": f"Bearer {access_token}",
                         "Content-Type": "application/pdf",  # Set content type to JSON
@@ -105,5 +101,6 @@ def organize_reports(dataframe, obj, obj_percent):
                     response = requests.put(
                         upload_url, headers=headers, data=file_data, timeout=10
                     )
+                    print(response.json())
             obj.UpdateBar(1, 1)
             obj_percent.update("Concluído")
